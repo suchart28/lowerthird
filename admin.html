@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LT Control Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400&family=Kanit:wght@400&family=Mali:wght@400&family=Mitr:wght@400&family=Prompt:wght@400&family=Sarabun:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="admin-page">
+
+    <div class="admin-header">
+        <div style="display: flex; flex-direction: column;">
+            <h1>ถ่ายทอดสดขอนแก่น</h1>
+            <small>Lower Third Controller | 0817396280</small>
+        </div>
+        <div style="display: flex; gap: 5px; align-items: center;">
+            <select id="fontSelector" class="font-select" onchange="changeFont()">
+                <option value="Prompt">Prompt</option>
+                <option value="Kanit">Kanit</option>
+                <option value="Sarabun">Sarabun</option>
+                <option value="Mitr">Mitr</option>
+                <option value="Chakra Petch">Chakra Petch</option>
+                <option value="Mali">Mali</option>
+            </select>
+            <button onclick="turnOffAll()" class="btn btn-hide-all">❌ OFF</button>
+        </div>
+    </div>
+
+    <div class="style-toolbar">
+        <div class="tool-item" title="Scale Size">
+            <i class="fas fa-expand-arrows-alt"></i>
+            <input type="range" id="scaleRange" min="0.5" max="1.5" step="0.1" value="1.0" oninput="updateStyle()">
+        </div>
+        <div class="tool-item" title="Corner Radius">
+            <i class="fas fa-circle-notch"></i>
+            <input type="range" id="radiusRange" min="0" max="50" step="5" value="0" oninput="updateStyle()">
+        </div>
+        <div class="tool-item" title="Background Color">
+            <i class="fas fa-fill-drip"></i>
+            <input type="color" id="colorPicker" value="#ffffff" oninput="updateStyle()">
+        </div>
+        <div class="tool-item" title="Accent Color (Bar)">
+            <i class="fas fa-grip-lines-vertical"></i>
+            <input type="color" id="accentColorPicker" value="#ff4757" oninput="updateStyle()">
+        </div>
+        <div class="tool-item" title="Name Color (Top)">
+            <i class="fas fa-bold"></i>
+            <input type="color" id="nameColorPicker" value="#2f3542" oninput="updateStyle()">
+        </div>
+        <div class="tool-item" title="Position Color (Bottom)">
+            <i class="fas fa-font"></i>
+            <input type="color" id="posColorPicker" value="#57606f" oninput="updateStyle()">
+        </div>
+    </div>
+
+    <div class="controls-grid" id="slots-container"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const totalSlots = 12;
+        const container = document.getElementById('slots-container');
+
+        // ฟังก์ชันช่วยอ่านข้อมูลอย่างปลอดภัย
+        function safeJsonParse(key, defaultValue) {
+            try {
+                const item = localStorage.getItem(key);
+                if (!item || item === "undefined") return defaultValue;
+                return JSON.parse(item);
+            } catch (e) {
+                console.warn(`Resetting corrupted data for ${key}`);
+                localStorage.removeItem(key);
+                return defaultValue;
+            }
+        }
+
+        function initSystem() {
+            const savedFont = localStorage.getItem('selectedFont') || 'Prompt';
+            if(document.getElementById('fontSelector')) document.getElementById('fontSelector').value = savedFont;
+            document.body.style.fontFamily = savedFont;
+
+            const defaultStyle = { 
+                scale: 1.0, radius: 0, 
+                color: '#ffffff', accentColor: '#ff4757', 
+                nameColor: '#2f3542', posColor: '#57606f' 
+            };
+            const styleSettings = safeJsonParse('styleSettings', defaultStyle);
+            
+            // Set All Inputs
+            const setVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val; };
+            setVal('scaleRange', styleSettings.scale);
+            setVal('radiusRange', styleSettings.radius);
+            setVal('colorPicker', styleSettings.color);
+            setVal('accentColorPicker', styleSettings.accentColor || '#ff4757');
+            setVal('nameColorPicker', styleSettings.nameColor || '#2f3542');
+            setVal('posColorPicker', styleSettings.posColor || '#57606f');
+
+            setTimeout(() => {
+                socket.emit('change_font', savedFont);
+                socket.emit('change_style', styleSettings);
+            }, 1000);
+
+            renderSlots();
+        }
+
+        function renderSlots() {
+            if(!container) return;
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= totalSlots; i++) {
+                const savedData = safeJsonParse(`slot_${i}`, { name: '', position: '', logo: '' });
+                const hasLogoClass = savedData.logo ? 'has-logo' : '';
+
+                // ตัดสินใจว่าจะโชว์ รูป หรือ ไอคอน
+                let btnContent = `<i class="fas fa-camera"></i>`;
+                if (savedData.logo) {
+                    btnContent = `<img src="${savedData.logo}" alt="logo">`;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'slot-card';
+                card.id = `card-${i}`;
+                
+                card.innerHTML = `
+                    <div class="slot-header">
+                        <span>SLOT ${i}</span>
+                        <input type="file" id="file-${i}" hidden accept="image/*" onchange="uploadFile(${i}, this)">
+                    </div>
+                    <input type="text" class="inp-direct" id="name-${i}" placeholder="ชื่อ-สกุล" value="${savedData.name}" oninput="autoSave(${i})">
+                    <input type="text" class="inp-direct inp-pos" id="pos-${i}" placeholder="ตำแหน่ง" value="${savedData.position}" oninput="autoSave(${i})">
+                    <div class="action-row">
+                        <button class="btn-icon-upload ${hasLogoClass}" id="btn-logo-${i}" onclick="document.getElementById('file-${i}').click()" title="อัปโหลดโลโก้">
+                            ${btnContent}
+                        </button>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-${i}" class="slot-toggle" onchange="handleToggle(${i})">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        window.autoSave = function(id) {
+            const name = document.getElementById(`name-${id}`).value;
+            const pos = document.getElementById(`pos-${id}`).value;
+            const oldData = safeJsonParse(`slot_${id}`, {});
+            localStorage.setItem(`slot_${id}`, JSON.stringify({ ...oldData, name, position: pos }));
+        };
+
+        window.uploadFile = function(id, input) {
+            const file = input.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('logoFile', file);
+            const btn = document.getElementById(`btn-logo-${id}`);
+            btn.style.opacity = '0.5';
+
+            fetch('/upload', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                const oldData = safeJsonParse(`slot_${id}`, {});
+                oldData.logo = data.url;
+                localStorage.setItem(`slot_${id}`, JSON.stringify(oldData));
+                
+                // อัปเดตปุ่มเป็นรูปภาพทันที
+                btn.innerHTML = `<img src="${data.url}" alt="logo">`;
+                btn.classList.add('has-logo');
+                btn.style.opacity = '1';
+
+                if(document.getElementById(`toggle-${id}`).checked) window.handleToggle(id); 
+            })
+            .catch(err => { console.error(err); btn.style.opacity = '1'; });
+        };
+
+        window.handleToggle = function(id) {
+            const toggle = document.getElementById(`toggle-${id}`);
+            const card = document.getElementById(`card-${id}`);
+
+            if (toggle.checked) {
+                document.querySelectorAll('.slot-toggle').forEach(t => { if (t.id !== `toggle-${id}`) t.checked = false; });
+                document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('active-slot'));
+                card.classList.add('active-slot');
+                
+                const storedData = safeJsonParse(`slot_${id}`, {});
+                socket.emit('update_lowerthird', {
+                    name: document.getElementById(`name-${id}`).value,
+                    position: document.getElementById(`pos-${id}`).value,
+                    logo: storedData.logo || ''
+                });
+            } else {
+                card.classList.remove('active-slot');
+                socket.emit('hide_lowerthird');
+            }
+        };
+
+        window.changeFont = function() {
+            const font = document.getElementById('fontSelector').value;
+            localStorage.setItem('selectedFont', font);
+            document.body.style.fontFamily = font;
+            socket.emit('change_font', font);
+        };
+
+        window.updateStyle = function() {
+            const settings = {
+                scale: document.getElementById('scaleRange').value,
+                radius: document.getElementById('radiusRange').value,
+                color: document.getElementById('colorPicker').value,
+                accentColor: document.getElementById('accentColorPicker').value,
+                nameColor: document.getElementById('nameColorPicker').value,
+                posColor: document.getElementById('posColorPicker').value
+            };
+            localStorage.setItem('styleSettings', JSON.stringify(settings));
+            socket.emit('change_style', settings);
+        };
+
+        window.turnOffAll = function() {
+            document.querySelectorAll('.slot-toggle').forEach(t => t.checked = false);
+            document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('active-slot'));
+            socket.emit('hide_lowerthird');
+        };
+
+        initSystem();
+    </script>
+</body>
+</html>

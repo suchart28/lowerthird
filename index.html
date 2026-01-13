@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>OBS Lower Third</title>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;600&family=Kanit:wght@300;400;600&family=Mali:wght@400;600&family=Mitr:wght@300;400;500&family=Prompt:wght@300;400;500;700&family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="obs-overlay">
+
+    <div id="lt-wrapper" class="lt-wrapper hidden">
+        <div class="lt-logo-box">
+            <img id="lt-logo" src="" alt="">
+        </div>
+
+        <div id="lt-content" class="lt-content">
+            <div class="lt-accent-bar" id="lt-accent-bar"></div>
+            
+            <div class="lt-text-box">
+                <div class="lt-name" id="lt-name">Name</div>
+                <div class="lt-position" id="lt-position">Position</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        
+        const wrapper = document.getElementById('lt-wrapper');
+        const contentBox = document.getElementById('lt-content');
+        const elName = document.getElementById('lt-name');
+        const elPos = document.getElementById('lt-position');
+        const elLogo = document.getElementById('lt-logo');
+        const elLogoBox = document.querySelector('.lt-logo-box');
+        const elAccent = document.getElementById('lt-accent-bar');
+
+        let currentScale = 1.0;
+
+        socket.on('show_lowerthird', (data) => {
+            wrapper.classList.remove('active');
+            wrapper.classList.add('hidden');
+            wrapper.style.transform = `translateY(100px) scale(${currentScale})`;
+
+            setTimeout(() => {
+                elName.innerText = data.name;
+                elPos.innerText = data.position;
+
+                if (data.logo && data.logo.trim() !== '') {
+                    elLogo.src = data.logo;
+                    elLogoBox.style.display = 'flex';
+                } else {
+                    elLogoBox.style.display = 'none';
+                }
+
+                wrapper.classList.remove('hidden');
+                wrapper.classList.add('active');
+                wrapper.style.transform = `translateY(0) scale(${currentScale})`;
+            }, 400);
+        });
+
+        socket.on('hide_lowerthird', () => {
+            wrapper.classList.remove('active');
+            wrapper.classList.add('hidden');
+            wrapper.style.transform = `translateY(100px) scale(${currentScale})`;
+        });
+
+        socket.on('update_font', (fontName) => {
+            document.body.style.fontFamily = `'${fontName}', sans-serif`;
+        });
+
+        // [UPDATE] รับค่าสี Font ชื่อและตำแหน่ง
+        socket.on('update_style', (data) => {
+            currentScale = data.scale;
+            contentBox.style.borderRadius = `${data.radius}px`;
+            contentBox.style.backgroundColor = data.color;
+            elAccent.style.backgroundColor = data.accentColor || '#ff4757';
+
+            // เปลี่ยนสีตัวหนังสือ
+            elName.style.color = data.nameColor || '#2f3542';
+            elPos.style.color = data.posColor || '#57606f';
+
+            if (wrapper.classList.contains('active')) {
+                wrapper.style.transform = `translateY(0) scale(${currentScale})`;
+            } else {
+                wrapper.style.transform = `translateY(100px) scale(${currentScale})`;
+            }
+        });
+    </script>
+</body>
+</html>

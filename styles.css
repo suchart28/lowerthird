@@ -1,0 +1,212 @@
+/* =========================================
+   1. Base & Reset (Dark Mode)
+   ========================================= */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Prompt', sans-serif;
+    background-color: #121212; /* พื้นหลังดำเข้ม */
+    color: #ecf0f1; /* ตัวหนังสือสีขาวนวล */
+    font-size: 12px; 
+    overflow-x: hidden;
+}
+
+/* Scrollbar Styles (ให้เข้ากับ Dark Mode) */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1e1e1e; }
+::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #777; }
+
+/* =========================================
+   2. Admin Page Layout (Compact)
+   ========================================= */
+body.admin-page {
+    width: 100%; max-width: 640px; height: 100vh;
+    margin: 0 auto; display: flex; flex-direction: column;
+    padding: 6px;
+}
+
+/* --- Header --- */
+.admin-header {
+    flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 10px; 
+    background: #1f1f1f; border: 1px solid #333;
+    border-radius: 6px; margin-bottom: 6px;
+}
+.admin-header h1 { font-size: 14px; margin: 0; font-weight: 600; color: #fff; }
+.admin-header small { color: #888; font-size: 10px; }
+
+.font-select {
+    padding: 0 5px; border-radius: 4px; 
+    border: 1px solid #444; background: #2d2d2d; color: #ddd;
+    font-size: 11px; height: 24px; margin-right: 5px; cursor: pointer;
+}
+.btn-hide-all {
+    background: #c0392b; color: white; border: none; border-radius: 4px;
+    padding: 0 8px; font-size: 10px; font-weight: 600; height: 24px; cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-hide-all:hover { background: #e74c3c; }
+
+/* --- Style Toolbar --- */
+.style-toolbar {
+    flex: 0 0 auto; background: #1f1f1f; padding: 6px 10px;
+    border: 1px solid #333; border-radius: 6px; margin-bottom: 6px;
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+}
+.tool-item { display: flex; align-items: center; gap: 5px; flex: 1; justify-content: center; }
+.tool-item i { color: #aaa; font-size: 12px; }
+
+/* --- Inputs Customization --- */
+
+/* Range Slider */
+input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+input[type=range]:focus { outline: none; }
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; height: 12px; width: 12px;
+    border-radius: 50%; background: #3498db; cursor: pointer; margin-top: -4px;
+}
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%; height: 4px; cursor: pointer; background: #444; border-radius: 2px;
+}
+
+/* Color Picker (Square Style) */
+input[type=color] {
+    -webkit-appearance: none; border: none; 
+    width: 24px; height: 24px; 
+    border-radius: 4px; /* สี่เหลี่ยมมน */
+    cursor: pointer; padding: 0; background: none;
+    transition: transform 0.2s;
+}
+input[type=color]::-webkit-color-swatch { 
+    border: 1px solid #555; 
+    border-radius: 4px; /* ไส้ในก็ต้องสี่เหลี่ยม */
+}
+input[type=color]:hover { transform: scale(1.1); border: 1px solid #777; }
+
+
+/* --- Grid Container --- */
+.controls-grid {
+    flex: 1 1 auto; display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: min-content;
+    gap: 6px; padding-bottom: 10px; overflow-y: auto;
+}
+
+/* --- Slot Card --- */
+.slot-card {
+    background: #1f1f1f; border-radius: 5px; padding: 6px 8px;
+    display: flex; flex-direction: column; gap: 4px;
+    border: 1px solid #333; position: relative; transition: all 0.2s;
+}
+.slot-card.active-slot {
+    border: 1px solid #2ecc71; background: #1a261f;
+    box-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
+}
+.slot-header {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10px; font-weight: 700; color: #666;
+}
+.slot-card.active-slot .slot-header span { color: #2ecc71; text-shadow: 0 0 5px rgba(46, 204, 113, 0.5); }
+
+/* Text Inputs */
+.inp-direct {
+    width: 100%; padding: 4px 6px;
+    border: 1px solid #444; border-radius: 3px;
+    font-family: inherit; font-size: 11px; 
+    background: #2d2d2d; color: #ecf0f1; transition: border-color 0.2s;
+}
+.inp-direct:focus { outline: none; border-color: #3498db; background: #333; }
+.inp-pos { font-size: 10px; color: #aaa; }
+
+/* Action Row */
+.action-row {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 2px;
+}
+
+/* --- Upload Button (Preview Style) --- */
+.btn-icon-upload {
+    background: none; border: none; cursor: pointer; padding: 0;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; /* ปุ่มอัปโหลดรูปยังคงเป็นวงกลมเพื่อให้เข้ากับ Logo */
+    transition: all 0.2s;
+    overflow: hidden; 
+}
+/* Icon Camera */
+.btn-icon-upload i { font-size: 14px; color: #555; transition: 0.2s; }
+/* Image Preview */
+.btn-icon-upload img {
+    width: 100%; height: 100%; object-fit: cover;
+    border-radius: 50%; border: 1px solid #555;
+}
+
+.btn-icon-upload:hover { transform: scale(1.1); }
+.btn-icon-upload:hover i { color: #ddd; }
+.btn-icon-upload.has-logo img { border: 2px solid #2ecc71; }
+
+/* Toggle Switch */
+.switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #444; transition: .4s; border-radius: 34px;
+}
+.slider:before {
+    position: absolute; content: ""; height: 14px; width: 14px;
+    left: 2px; bottom: 2px; background-color: #bbb; transition: .4s; border-radius: 50%;
+}
+input:checked + .slider { background-color: #2ecc71; }
+input:checked + .slider:before { 
+    transform: translateX(16px); background-color: white;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+/* =========================================
+   3. OBS Overlay Styles (Bottom Center)
+   ========================================= */
+body.obs-overlay {
+    background-color: transparent;
+    overflow: hidden; margin: 0; padding: 0;
+    width: 100vw; height: 100vh;
+    
+    display: flex; 
+    align-items: flex-end; /* ชิดล่าง */
+    justify-content: center; /* กึ่งกลางแนวนอน */
+}
+
+.lt-wrapper {
+    margin-bottom: 80px; /* ระยะห่างจากขอบล่าง */
+    display: flex; align-items: center; gap: 15px;
+    transform-origin: bottom center;
+    transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    max-width: 90%;
+}
+.lt-wrapper.hidden { opacity: 0; transform: translateY(50px) scale(0.9); }
+.lt-wrapper.active { opacity: 1; transform: translateY(0) scale(1); }
+
+/* Logo Box */
+.lt-logo-box {
+    width: 90px; height: 90px;
+    background: white; border-radius: 50%;
+    overflow: hidden; border: 4px solid white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.lt-logo-box img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Content Box */
+.lt-content {
+    background: white; display: flex; overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    min-width: 350px; padding-right: 15px;
+}
+.lt-accent-bar { width: 12px; background: #ff4757; flex-shrink: 0; }
+.lt-text-box {
+    padding: 10px 20px;
+    display: flex; flex-direction: column; justify-content: center;
+    flex-grow: 1;
+}
+.lt-name { font-size: 32px; font-weight: 700; color: #2f3542; line-height: 1.1; white-space: nowrap; }
+.lt-position { font-size: 20px; font-weight: 400; color: #57606f; white-space: nowrap; margin-top: 2px; }
